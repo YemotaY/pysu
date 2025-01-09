@@ -1,0 +1,17 @@
+class a {
+    + __init__(self)
+    + example_function1(self, x, y)
+}
+
+class b {
+    + __init__(self)
+    + example_function2(self, a, b, c)
+}
+
+class helper {
+    + __init__(self)
+    + method(self)
+}
+
+Call Hierarchy:
+    example_function2 -> sleep
