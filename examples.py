@@ -30,7 +30,7 @@ try:
 
     log.info("ich bin nur eine info, will dem entwickler was sagen bei zeiten")
     log.warn("ich bin eine warnung, schau mal lieber")
-    log.error("ich bin ein Fehler, wegen mir ist das Programm zum abbruch gekommen")
+    #log.error("ich bin ein Fehler, wegen mir ist das Programm zum abbruch gekommen")
 
     """ZU TESTEN / UMBAUEN"""
     a = a()

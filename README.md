@@ -19,7 +19,6 @@ Advanced logging/tracing/analyzing and later on visualization classes.\
 This project grew out of sheer neccessity. I did wrote an LIDAR driver for my robot with a huge simulation class including icp and some other stuff.\
 Many hugely time dependant steps and some tricky brain twists leeded me to the decision to enrich this.
 
-
 <a id="1"></a>
 
 ## 2. Project Description

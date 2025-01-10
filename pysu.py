@@ -11,6 +11,7 @@ import os
 import ast
 import sys
 import time
+import json
 import inspect 
 import numpy as np
 import networkx as nx
@@ -24,18 +25,17 @@ import re
 class pysu:
     """
     This is an advanced class to log/monitor/visualize even big chunks of logic,"fast".
-    level: 1 -> only errors,2 -> warnings, too, 3 -> Everything, 0=Nothing(No log, no trace and no profiler)
-    classes/methods/variables are automaticaly analyzed from the callerfile -> self.classes_structs
-    If you wanto use more complex classes just mark your import in the main file, where pysu initated with #TOLOG
-    A string representation in an UML like scheme will be generated under self. -> self.uml
-    The FunctionProfiler() class is wrapped in self.profiler, for more info about look into FunctionProfiler()
-
+    level       = level: 1 -> only errors,2 -> warnings, too, 3 -> Everything, 0=Nothing(No log, no trace and no profiler)\
+    linked      = True/False if you want to analyze any linked classes, when activated add #TOLOG to the class\
+    save        = True/False, Should everythong be written into a file?\
+    visualize   = True/False To be done..
     refer example uses for better understanding.
 
     """
     def __init__(self, level=1, linked = True, save = True, visualize = False) -> None:
         if 0 > level < 3:
             raise Exception(f"Ungültiges Loglevel {level}")
+        
         self.level = level  
         self.messages = []
         self.callstack = []
@@ -44,10 +44,11 @@ class pysu:
             return 
 
         self.FunctionProfiler = FunctionProfiler(save) # must be initiated and used as a decorator
-        stack = inspect.stack() # get callstack
-        self.caller = stack[1]  # get last caller
-        self.base_structs = PyClassScanner(self.caller.filename).run()  # scan for classes,methods and parameters
+        stack = inspect.stack() 
+        self.caller = stack[1]  
+        self.base_structs = PyClassScanner(self.caller.filename).run() 
         self.uml = self.generate_uml_diagram(self.base_structs)
+
         if(linked):
             linked_classes = self.find_linked_classes(self.caller.filename) # search for linked classes with #TOLOG
             if(not linked_classes):
@@ -58,9 +59,20 @@ class pysu:
                     self.linked_structs = PyClassScanner(linked_classes[i]+".py").run()
                     self.base_structs = self.combine_structs(self.base_structs,self.linked_structs)
                     self.uml = self.generate_uml_diagram(self.base_structs)
+
+        if(self.level == 3):   
+            print("***********************************************************************")  
+            print("FOUND CLASSES")           
+            self.print_pretty(self.base_structs)
+            print("***********************************************************************")  
+            print("CREATED UML")
+            print(self.uml)
+            print("***********************************************************************")  
+
         if(save):
             with open("UML.txt","w") as f:
                 f.write(self.uml)
+
         if(visualize): #To be done later
             pass
             #self.monitor_visualizer = MonitorVisualizer(self.classes_structs).main() #TBD LATER
@@ -68,32 +80,36 @@ class pysu:
 
     # Workers
     def info(self, message, console=False):
-        if message:
-            if self.level == 3:
-                self.messages.append({"mID": 3, "msg": message, "ts": time.time()})
-                if console:
-                    print(message)
-
-    def warn(self, message, console=False):
-        if message:
-            if self.level == 3 or self.level == 2:
-                self.messages.append({"mID": 2, "msg": message, "ts": time.time()})
-                if console:
-                    print(message)
-
-    def error(self, message, console=True):
-        if message:
-            self.messages.append({"mID": 1, "msg": message, "ts": time.time()})
+        """Takes an information and stores it into the message list, if console = True it gets printed instantly"""
+        if self.level == 3:
+            self.messages.append({"mID": 3, "msg": message, "ts": time.time()})
             if console:
                 print(message)
+
+    def warn(self, message, console=False):
+        """Takes an warning and stores it into the message list, if console = True it gets printed instantly"""
+        if self.level == 3 or self.level == 2:
+            self.messages.append({"mID": 2, "msg": message, "ts": time.time()})
+            if console:
+                print(message)
+
+    def error(self, message, console=True):
+        """Takes an error and stores it into the message list, if console = True it gets printed instantly"""
+        self.messages.append({"mID": 1, "msg": message, "ts": time.time()})
+        if console:
+            print(message)
+    
     #Outputs
     def get_errors(self) -> list:
+        """Returns a list with all errors"""
         return [eintrag for eintrag in self.messages if eintrag["mID"] == 1]
 
     def get_warns(self) -> list:
+        """Returns a list with all warnings"""
         return [eintrag for eintrag in self.messages if eintrag["mID"] == 2]
 
     def get_infos(self) -> list:
+        """Returns a list with all informations"""
         return [eintrag for eintrag in self.messages if eintrag["mID"] == 3]
 
     def show_logs(self):
@@ -114,9 +130,9 @@ class pysu:
         Opens the specified file and searches for imports of other classes, marked with the marker '#TOLOG'.
         Additional comments after '#TOLOG' are ignored.
         Args:
-            filename (str): The path to the file to be parsed.
+            filename (str)        = The path to the file to be parsed.
         Returns:
-            list: A list of strings containing the imported classes, marked with '#TOLOG'.
+            linked_classes (list) = A list of strings containing the imported classes, marked with '#TOLOG'.
         """
         linked_classes = []
 
@@ -142,6 +158,23 @@ class pysu:
             print(f"Ein Exception in find_linked_classes occured : {e}")
 
         return linked_classes
+    
+    def print_pretty(self,data):
+        def format_method(method):
+            params = ', '.join(param['name'] for param in method['parameters'])
+            return f"{method['name']}({params})"
+
+        def format_class(cls):
+            methods_str = "\n  ".join(format_method(m) for m in cls['methods'])
+            return f"Class: {cls['name']}\n  Methods:\n  {methods_str}"
+
+        def format_call_hierarchy(hierarchy):
+            return f"Function: {hierarchy['name']}\n  Calls:\n    " + "\n    ".join(callee['name'] for callee in hierarchy['callees'])
+
+        formatted_classes = "\n".join(format_class(cls) for cls in data['Classes'])
+        formatted_call_hierarchy = "\n".join(format_call_hierarchy(call) for call in data['CallHierarchy'])
+        output = f"Classes:\n{formatted_classes}\n\nCall Hierarchy:\n{formatted_call_hierarchy}"
+        print(output)
 
     # PEPs
     def __repr__(self) -> str:
@@ -173,62 +206,49 @@ class pysu:
     ) -> Any:  # Allows an instance of a class to be called as a function
         print("pysu: -> __call__ called()")
 
-    # Getter and Setter müssen implementiert sein ansonsten fehler
-    """
-    def __getattribute__(self, __name: str) -> Any:
-        print("pysu: -> __getattribute__ called()")
-
-    def __setattr__(self, __name: str, __value: Any) -> None:
-        print("pysu: -> __setattr__ called()")
-
-    def __delattr__(self, __name: str) -> None:
-        print("pysu: -> __delattr__ called()")
-
-    def __getitem__(self, index) -> Any:
-        print("pysu: -> __getitem__ called()")
-
-    def __setitem__(self, key, value) -> Any:
-        print("pysu: -> __setitem__ called()")
-
-    def __delitem__(self, key) -> Any:
-        print("pysu: -> __delitem__ called()")
-    """
-
     # Workers
 
     def combine_structs(self,base, linked):
-        combined = base.copy()  # Erstellt eine Kopie von base_structs, um es nicht direkt zu verändern
-
-        # Kombiniert die 'Classes'-Listen (vermeidet Duplikate basierend auf dem Namen)
-        combined['Classes'] = base['Classes'] + linked['Classes']  # Anhängen der Klassen
+        """
+        Combines 2 dicts and look out for empty lists, refer to readme for output
+        Args:
+            base (dict)   = return from PyClassScanner
+            linked (dict) = return from PyClassScanner
+        Returns:
+            combined      = combined dict from base and linked
+        """
+        combined = base.copy()  
+        combined['Classes'] = base['Classes'] + linked['Classes'] 
         seen_class_names = set()
         combined['Classes'] = [cls for cls in combined['Classes'] if not (cls['name'] in seen_class_names or seen_class_names.add(cls['name']))]
 
-        # Kombiniert die 'CallHierarchy'-Listen (vermeidet Duplikate)
         combined['CallHierarchy'] = base['CallHierarchy'] + linked['CallHierarchy']
-        seen_calls = set()  # Falls du Duplikate bei CallHierarchy vermeiden möchtest
+        seen_calls = set()  
         combined['CallHierarchy'] = [ch for ch in combined['CallHierarchy'] if not (str(ch) in seen_calls or seen_calls.add(str(ch)))]
-
         return combined
 
     def generate_uml_diagram(self, classes_structs):
+        """
+        Generates an textual UML diagramm of the incoming classes_structs
+        Args:
+            classes_structs (dict)   = The dictionary containing all scanned classes
+        Returns:
+            uml_output  (str)        = textual UML scheme
+        """
         uml_output = []
-        # Extract class structures
-
         for class_entry in classes_structs.get("Classes", []):
             class_name = class_entry["name"]
             methods = class_entry.get("methods", [])
             uml_output.append(f"class {class_name} {{")
-            # Add methods
             for method in methods:
                 method_name = method["name"]
                 parameters = method["parameters"]
                 param_str = ", ".join(
                     param["name"] for param in parameters
-                )  # Format method signature
+                ) 
                 uml_output.append(f"    + {method_name}({param_str})")
             uml_output.append("}")
-            uml_output.append("")  # Empty line for separation
+            uml_output.append("")  
         # Extract call hierarchy
         call_hierarchy = classes_structs.get("CallHierarchy", [])
         if call_hierarchy:
@@ -396,13 +416,13 @@ class MonitorVisualizer:
 class FunctionProfiler:
     def __init__(self,save):
         self.save = save
-        self.logs = []  # Hier werden alle Logs gespeichert
+        self.logs = [] 
 
     def __str__(self):
         return f"FunctionProfiler()"
 
     def trace(self, func):
-        """Wrapper, um die Funktion zu überwachen."""
+        """Wrapper, to observe handed function."""
 
         def wrapper(*args, **kwargs):
             start_time = time.time()
@@ -452,17 +472,43 @@ class FunctionProfiler:
 
         return wrapper
 
+    def print_pretty_function_profile(self,data):
+        def format_trace(trace):
+            return '\n  '.join(trace)
+
+        # Formatierte Ausgabe
+        output = f"Function Profile:\n"
+        output += f"Function: {data['funktion']}\n"
+        output += f"Start Time: {data['startzeit']}\n"
+        output += f"Duration: {data['dauer']} seconds\n"
+        output += f"Arguments: {data['args']}\n"
+        output += f"Keyword Arguments: {json.dumps(data['kwargs'], indent=4)}\n"
+        output += f"Result: {data['ergebnis']}\n"
+        # Formatierte Trace-Ausgabe
+        if 'vtrace' in data:
+            output += f"\nTrace Log:\n"
+            output += format_trace(data['vtrace'])
+
+        print(output)
+        print("***********************************************************************") 
+
     def show_logs(self):
-        """Zeigt alle gespeicherten Logs."""
-        print("\n[TRACE LOGS]")
-        if(self.save):
-            with open("TRACE.json", "w") as f:
-                f.write(str(self.logs).replace("'", '"'))
-        for log in self.logs:
-            print("\n"+str(log))
+        """Shows all saved logs"""
+        if(self.logs):
+            print("[TRACE LOGS]")
+            if(self.save):
+                with open("TRACE.json", "w") as f:
+                    f.write(str(self.logs).replace("'", '"'))
+            for log in self.logs:
+                self.print_pretty_function_profile(log)
 
 class PyClassScanner:
     def __init__(self, input_filename):
+        """
+        Takes an filename and parses the classes out of the file
+        Args:
+            filename (path) = The path to the to scanning file
+        """
         self.input_filename = input_filename
         self.classes = {}
         self.call_hierarchy = {}
@@ -482,7 +528,11 @@ class PyClassScanner:
                 self.classes[node.name] = methods
 
     def _extract_methods(self, class_node):
-        """Extracts methods and their parameters from a class node."""
+        """
+        Extracts methods and their parameters from a class node.
+        Args:
+            class_node (Any) = The scanned class nodes
+        """
         methods = {}
         for item in class_node.body:
             if isinstance(item, ast.FunctionDef):
@@ -497,7 +547,11 @@ class PyClassScanner:
         return methods
 
     def _track_calls(self, method_node):
-        """Tracks method calls inside the method body."""
+        """
+        Tracks method calls inside the method body from method nodes.
+        Args:
+            method_node (Any) = The scanned method nodes
+        """
         for node in ast.walk(method_node):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Attribute):
@@ -508,7 +562,11 @@ class PyClassScanner:
                     self.call_hierarchy[caller].append(callee)
 
     def _measure_execution_time(self, method_node):
-        """Measures the execution time of the given method (for demonstration purposes)."""
+        """
+        Measures the execution time of the given method.
+        Args:
+            method_node (Any) = The scanned method nodes
+        """
         start_time = time.time()
         exec(compile(method_node, filename="<ast>", mode="exec"))# Execute the method standalone
         end_time = time.time()
@@ -547,7 +605,6 @@ class PyClassScanner:
         self._parse_file()
         json_output = self._generate_json()
         self.ouput_obj = json_output
-        # print(json_output)
         return json_output
 
 
