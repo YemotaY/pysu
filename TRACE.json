@@ -1,1 +1,45 @@
-[{"funktion": "example_function1", "startzeit": "2025-01-10T17:13:31.937199", "dauer": 0.0, "args": "<__main__.a object at 0x00000156D7E70AF0>-5-3", "kwargs": {}, "ergebnis": "16", "vtrace": ["[PROFILER] Test of method: example_function1", "[PROFILER] Starttime: 2025-01-10T17:13:31.937199", "[PROFILER] Parameter-signature: (self, x, y)", "[PROFILER] Used parameters: args=(<__main__.a object at 0x00000156D7E70AF0>, 5, 3), kwargs={}", "[TRACE] Stepping into: example_function1", "[TRACE] Methods variables value change. 16: {"self": <__main__.a object at 0x00000156D7E70AF0>, "x": 5, "y": 3}", "[TRACE] Methods variables value change. 17: {"self": <__main__.a object at 0x00000156D7E70AF0>, "x": 5, "y": 3, "zwischen_ergebnis": 8}", "[TRACE] Methods variables value change. 18: {"self": <__main__.a object at 0x00000156D7E70AF0>, "x": 5, "y": 3, "zwischen_ergebnis": 8, "endergebnis": 16}", "[TRACE] Step out of function: example_function1 with return: 16", "[PROFILER] Execution time: 0.0000 seconds", "[PROFILER] Result: 16"]}, {"funktion": "example_function2", "startzeit": "2025-01-10T17:13:31.937199", "dauer": 0.5003597736358643, "args": "<__main__.b object at 0x00000156D7E70B80>-2-4", "kwargs": {"c": 3}, "ergebnis": "18", "vtrace": ["[PROFILER] Test of method: example_function2", "[PROFILER] Starttime: 2025-01-10T17:13:31.937199", "[PROFILER] Parameter-signature: (self, a, b, c=1)", "[PROFILER] Used parameters: args=(<__main__.b object at 0x00000156D7E70B80>, 2, 4), kwargs={"c": 3}", "[TRACE] Stepping into: example_function2", "[TRACE] Methods variables value change. 26: {"self": <__main__.b object at 0x00000156D7E70B80>, "a": 2, "b": 4, "c": 3}", "[TRACE] Methods variables value change. 27: {"self": <__main__.b object at 0x00000156D7E70B80>, "a": 2, "b": 4, "c": 3}", "[TRACE] Step out of function: example_function2 with return: 18", "[PROFILER] Execution time: 0.5004 seconds", "[PROFILER] Result: 18"]}]
+[
+    {
+        "funktion": "example_function1",
+        "startzeit": "2025-01-10T17:13:31.937199",
+        "dauer": 0.0,
+        "args": "<__main__.a object at 0x00000156D7E70AF0>-5-3",
+        "kwargs": {},
+        "ergebnis": "16",
+        "vtrace": [
+            "[PROFILER] Test of method: example_function1",
+            "[PROFILER] Starttime: 2025-01-10T17:13:31.937199",
+            "[PROFILER] Parameter-signature: (self, x, y)",
+            "[PROFILER] Used parameters: args=(<__main__.a object at 0x00000156D7E70AF0>, 5, 3), kwargs={}",
+            "[TRACE] Stepping into: example_function1",
+            "[TRACE] Methods variables value change. 16: {"self": <__main__.a object at 0x00000156D7E70AF0>, "x": 5, "y": 3}",
+            "[TRACE] Methods variables value change. 17: {"self": <__main__.a object at 0x00000156D7E70AF0>, "x": 5, "y": 3, "zwischen_ergebnis": 8}",
+            "[TRACE] Methods variables value change. 18: {"self": <__main__.a object at 0x00000156D7E70AF0>, "x": 5, "y": 3, "zwischen_ergebnis": 8, "endergebnis": 16}",
+            "[TRACE] Step out of function: example_function1 with return: 16",
+            "[PROFILER] Execution time: 0.0000 seconds",
+            "[PROFILER] Result: 16"
+        ]
+    },
+    {
+        "funktion": "example_function2",
+        "startzeit": "2025-01-10T17:13:31.937199",
+        "dauer": 0.5003597736358643,
+        "args": "<__main__.b object at 0x00000156D7E70B80>-2-4",
+        "kwargs": {
+            "c": 3
+        },
+        "ergebnis": "18",
+        "vtrace": [
+            "[PROFILER] Test of method: example_function2",
+            "[PROFILER] Starttime: 2025-01-10T17:13:31.937199",
+            "[PROFILER] Parameter-signature: (self, a, b, c=1)",
+            "[PROFILER] Used parameters: args=(<__main__.b object at 0x00000156D7E70B80>, 2, 4), kwargs={"c": 3}",
+            "[TRACE] Stepping into: example_function2",
+            "[TRACE] Methods variables value change. 26: {"self": <__main__.b object at 0x00000156D7E70B80>, "a": 2, "b": 4, "c": 3}",
+            "[TRACE] Methods variables value change. 27: {"self": <__main__.b object at 0x00000156D7E70B80>, "a": 2, "b": 4, "c": 3}",
+            "[TRACE] Step out of function: example_function2 with return: 18",
+            "[PROFILER] Execution time: 0.5004 seconds",
+            "[PROFILER] Result: 18"
+        ]
+    }
+]
